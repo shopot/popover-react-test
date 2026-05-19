@@ -1,0 +1,170 @@
+/* ─── CSS Custom Properties ──────────────────────────────────────────────────
+   Override at any level in your component tree:
+
+   .my-popover {
+     --popover-bg: #1a1a2e;
+     --popover-border: rgba(255,255,255,0.1);
+   }
+─────────────────────────────────────────────────────────────────────────── */
+.root {
+  --popover-bg: #ffffff;
+  --popover-border: rgba(0, 0, 0, 0.08);
+  --popover-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.07),
+    0 10px 24px -4px rgba(0, 0, 0, 0.1);
+  --popover-radius: 8px;
+  --popover-transition-duration: 200ms;
+  --popover-transition-easing: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Set by Popover.tsx per-placement */
+  --popover-transform-origin: top center;
+}
+
+/* ─── Root ───────────────────────────────────────────────────────────────── */
+.root {
+  position: absolute;
+  box-sizing: border-box;
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
+  box-shadow: var(--popover-shadow);
+  outline: none;
+  isolation: isolate;
+  /* overflow is managed below — visible when arrow is present */
+  overflow: visible;
+}
+
+/* ─── Content wrapper: clips children to border-radius ──────────────────── */
+.content {
+  overflow: auto;
+  border-radius: var(--popover-radius);
+}
+
+/* ─── Arrow ──────────────────────────────────────────────────────────────── */
+.arrow {
+  display: inline-flex;
+  pointer-events: none;
+  line-height: 0;
+  /* Arrow is absolutely positioned by PopoverArrow.tsx */
+}
+
+/* ─── Transitions ────────────────────────────────────────────────────────────
+   All transitions use opacity + transform only.
+   visibility / display are never animated — they'd fight with the
+   hideWhileMeasuring (opacity:0) set inline by Popover.tsx.
+
+   "exited" = invisible, no pointer events (handled by the exited class below)
+   "entering/entered" = fully visible
+   "exiting" = animating out
+─────────────────────────────────────────────────────────────────────────── */
+
+/* Shared: kill pointer events when fully exited */
+.exited {
+  pointer-events: none;
+}
+
+/* ── fade ─────────────────────────────────────────────────────────────── */
+.transition-fade {
+  transition: opacity var(--popover-transition-duration) var(--popover-transition-easing);
+}
+
+.transition-fade.exited {
+  opacity: 0;
+}
+.transition-fade.exiting {
+  opacity: 0;
+}
+.transition-fade.entering {
+  opacity: 0;
+}
+.transition-fade.entered {
+  opacity: 1;
+}
+
+/* ── scale ────────────────────────────────────────────────────────────── */
+.transition-scale {
+  transform-origin: var(--popover-transform-origin);
+  transition:
+    opacity var(--popover-transition-duration) var(--popover-transition-easing),
+    transform var(--popover-transition-duration) var(--popover-transition-easing);
+}
+
+.transition-scale.exited {
+  opacity: 0;
+  transform: scale(0.92);
+}
+.transition-scale.exiting {
+  opacity: 0;
+  transform: scale(0.92);
+}
+.transition-scale.entering {
+  opacity: 0;
+  transform: scale(0.92);
+}
+.transition-scale.entered {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── shift ────────────────────────────────────────────────────────────── */
+/*
+   Shift direction depends on placement. Because CSS Modules hashes class
+   names, [data-placement] attribute selectors are the reliable way to
+   combine placement + state without relying on class name order.
+*/
+.transition-shift {
+  transition:
+    opacity var(--popover-transition-duration) var(--popover-transition-easing),
+    transform var(--popover-transition-duration) var(--popover-transition-easing);
+}
+
+.transition-shift.entered {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+/* bottom → enters from above, exits upward */
+[data-placement^='bottom'].transition-shift.exited,
+[data-placement^='bottom'].transition-shift.exiting,
+[data-placement^='bottom'].transition-shift.entering {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* top → enters from below, exits downward */
+[data-placement^='top'].transition-shift.exited,
+[data-placement^='top'].transition-shift.exiting,
+[data-placement^='top'].transition-shift.entering {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* right → enters from left, exits leftward */
+[data-placement^='right'].transition-shift.exited,
+[data-placement^='right'].transition-shift.exiting,
+[data-placement^='right'].transition-shift.entering {
+  opacity: 0;
+  transform: translateX(-6px);
+}
+
+/* left → enters from right, exits rightward */
+[data-placement^='left'].transition-shift.exited,
+[data-placement^='left'].transition-shift.exiting,
+[data-placement^='left'].transition-shift.entering {
+  opacity: 0;
+  transform: translateX(6px);
+}
+
+/* ── none ─────────────────────────────────────────────────────────────── */
+.transition-none {
+  /* No CSS transition — state changes are instant */
+}
+
+.transition-none.exited,
+.transition-none.exiting {
+  opacity: 0;
+}
+
+.transition-none.entering,
+.transition-none.entered {
+  opacity: 1;
+}
